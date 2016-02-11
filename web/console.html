@@ -109,6 +109,7 @@
 					}
 				}
 				methSelect.change(function(){//create form on method select
+					$('#result').html('');
 					var form=$('#form');
 					form.html('');//flush params
 					var selected=methSelect.children('option:selected');
@@ -145,7 +146,7 @@
 								var search_param=search_params[i];
 								form.append($('<input>',{
 									type:'text',
-									name:param,
+									name:search_param,
 									placeholder:search_param,
 									is_search:1,
 								}));
@@ -167,8 +168,6 @@
 				var meth=selected.attr('meth');
 				var method=methods[ctrl][meth].method.toUpperCase();
 				var requestUrl=API_URL+ctrl;
-				if(meth!=='all') requestUrl+='/'+meth;
-
 
 				var id=$('#id').val();
 				if(id){
@@ -179,6 +178,18 @@
 					var param=$(this);
 					data[param.attr('name')]=param.val();
 				});
+				var searchParams={};
+				$('#form input[is_search=1]').each(function(){
+					var param=$(this);
+					searchParams[param.attr('name')]=param.val();
+				});
+				if(searchParams){
+					if(data==={} && method==='GET'){
+						data=searchParams;
+					}else{
+						requestUrl+='?'+$.param(searchParams);
+					}
+				}
 
 				console.log('request '+method, requestUrl);
 				console.log(data);
@@ -187,19 +198,39 @@
 					url: requestUrl,
 					type: method,
 					data: data,
-					success: function(data) {
-						$('#result').html(data);
-					}
+				}).done(function(data) {
+					console.log('result:',data);
+					$('#result_code').html(data.status);
+					$('#result').html(JSON.stringify(data));
+				}).fail(function(data) {
+					console.log('fail:',data);
+					$('#result_code').html(data.status);
+					$('#result').html(JSON.stringify(data));
 				});
-				
 			}
 		</script>
+		<style>
+			#methods,#form,#result_code,#result{
+				min-width:300px;
+				margin-bottom:10px;
+				width:80%;
+			}
+			#result{
+				height:100px;
+				font-family:monospace;
+				white-space:pre;
+			}
+			input[type="text"],input[type="number"]{
+				width:100%;
+			}
+		</style>	
 	</head>
 	<body>
 		<div>
 			<select id="methods"><option>Choose a method</option></select>
 			<form id="form"></form>
-			<textarea id="result" style="font-family:monospace;white-space:pre;"></textarea>
+			<span id="result_code"></span>
+			<textarea id="result"></textarea>
 		</div>
 	</body>
 </html>
