@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>console</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script>
+			var API_URL='/';
+			var methods={
+				users:{
+					edit:{
+						by_id:true,
+						method:'put',
+						params:[
+							'name',
+							'birth_date',
+						],
+					},
+				},
+				projects:{
+					byUser:{
+						method:'get',
+						by_id:true,
+					},
+					create:{
+						method:'post',
+						params:[
+							'name',
+							'creation_date',
+							'description',
+							'deadline',
+						],
+					},
+					update:{
+						method:'post',
+						by_id:true,
+						params:[
+							'name',
+							'description',
+							'deadline',
+							'status',
+						],
+					},
+					delete:{
+						method:'delete',
+						by_id:true,
+					},
+				},
+				tasks:{
+					all:{
+						method:'get',
+					},
+					create:{
+						method:'post',
+						params:[
+							'name',
+							'creation_date',
+							'description',
+							'project_id',
+							'owner_id',
+							'deadline',
+						],
+					},
+					update:{
+						method:'put',
+						by_id:true,
+						params:[
+							'name',
+							'description',
+							'project_id',
+							'deadline',
+							'status',
+						],
+					},
+					delete:{
+						method:'delete',
+						by_id:true,
+					},
+					assign:{
+						method:'patch',
+						by_id:true,
+						params:[
+							'owner_id',
+						],
+					},
+					assigned:{
+						method:'get',
+						search_params:[
+							'owner_id'
+						]
+					}
+				}
+			};
+			$(function(){
+				fillOptions();
+				$('#form').submit(request);
+			});
+			function fillOptions(){//fill methods select
+				var methSelect=$('#methods');
+				for(var ctrl in methods){
+					var cm=methods[ctrl];
+					for(var meth in cm){
+						$(methSelect).append($('<option>',{
+							text:ctrl+' / '+meth,
+							ctrl:ctrl,
+							meth:meth,
+						}));
+					}
+				}
+				methSelect.change(function(){//create form on method select
+					var form=$('#form');
+					form.html('');//flush params
+					var selected=methSelect.children('option:selected');
+					var ctrl=selected.attr('ctrl');
+					var meth=selected.attr('meth');
+					if(meth && ctrl){
+						if(typeof methods[ctrl][meth].by_id !== 'undefined' && methods[ctrl][meth].by_id){
+							form.append($('<input>',{
+								by_id:true,
+								id:'id',
+								type:'number',
+								placeholder:'ID',
+							}));
+							form.append('<br />');
+							form.append('<hr />');
+						}
+						if(typeof methods[ctrl][meth].params !== 'undefined' && methods[ctrl][meth].params.length){
+							var params=methods[ctrl][meth].params;
+							for(var i in params){
+								var param=params[i];
+								form.append($('<input>',{
+									type:'text',
+									name:param,
+									placeholder:param,
+									is_param:1,
+								}));
+								form.append('<br />');
+							}
+							form.append('<hr />');
+						}
+						if(typeof methods[ctrl][meth].search_params !== 'undefined' && methods[ctrl][meth].search_params.length){
+							var search_params=methods[ctrl][meth].search_params;
+							for(var i in search_params){
+								var search_param=search_params[i];
+								form.append($('<input>',{
+									type:'text',
+									name:param,
+									placeholder:search_param,
+									is_search:1,
+								}));
+								form.append('<br />');
+							}
+							form.append('<hr />');
+						}
+						form.append($('<input>',{
+							type:'submit',
+							title:'Request',
+						}));
+					}
+				});
+			}
+			function request(event){
+				event.preventDefault();
+				var selected=$('#methods option:selected');
+				var ctrl=selected.attr('ctrl');
+				var meth=selected.attr('meth');
+				var method=methods[ctrl][meth].method.toUpperCase();
+				var requestUrl=API_URL+ctrl;
+				if(meth!=='all') requestUrl+='/'+meth;
+
+
+				var id=$('#id').val();
+				if(id){
+					requestUrl+='/'+id;
+				}
+				var data={};
+				$('#form input[is_param=1]').each(function(){
+					var param=$(this);
+					data[param.attr('name')]=param.val();
+				});
+
+				console.log('request '+method, requestUrl);
+				console.log(data);
+
+				$.ajax({
+					url: requestUrl,
+					type: method,
+					data: data,
+					success: function(data) {
+						$('#result').html(data);
+					}
+				});
+				
+			}
+		</script>
+	</head>
+	<body>
+		<div>
+			<select id="methods"><option>Choose a method</option></select>
+			<form id="form"></form>
+			<textarea id="result" style="font-family:monospace;white-space:pre;"></textarea>
+		</div>
+	</body>
+</html>
