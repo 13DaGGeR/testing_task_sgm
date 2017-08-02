@@ -9,8 +9,8 @@ use Yii;
  *
  * @property integer $id
  * @property integer $task_id
- * @property integer $old_user_id
- * @property integer $new_user_id
+ * @property integer $old_owner_id
+ * @property integer $new_owner_id
  * @property integer $owner_id
  * @property string $reason
  * @property string $time
@@ -32,7 +32,7 @@ class Assignment extends \yii\db\ActiveRecord
     {
         return [
             [['task_id', 'reason', 'time'], 'required'],
-            [['task_id', 'old_user_id', 'new_user_id', 'owner_id'], 'integer'],
+            [['task_id', 'old_owner_id', 'new_owner_id', 'owner_id'], 'integer'],
             [['reason'], 'string'],
             [['time'], 'safe'],
         ];
@@ -46,11 +46,35 @@ class Assignment extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'task_id' => 'Task ID',
-            'old_user_id' => 'Old User ID',
-            'new_user_id' => 'New User ID',
+            'old_owner_id' => 'Old User ID',
+            'new_owner_id' => 'New User ID',
             'owner_id' => 'Owner ID',
             'reason' => 'Reason',
             'time' => 'Time',
         ];
     }
+
+	/**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getTask()
+    {
+        return $this->hasOne(Task::className(), ['id' => 'task_id']);
+    }
+
+	public function beforeValidate() {
+		$ok=parent::beforeValidate();
+		if($ok){
+			$this->owner_id=Yii::$app->user->identity->id;
+			$this->time=date('Y-m-d H:i:s');
+
+			//Permit assignment if user is not owner of the project
+			if($this->isAttributeChanged('owner_id') && 
+				$this->task->project->owner_id != Yii::$app->user->identity->id
+			){
+				throw new \yii\web\UnauthorizedHttpException;
+			}
+		}
+		return $ok;
+	}
 }

@@ -22,6 +22,7 @@ use Yii;
  */
 class Task extends \yii\db\ActiveRecord
 {
+	use SoftDelete;
     /**
      * @inheritdoc
      */
@@ -36,8 +37,12 @@ class Task extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'creation_date', 'description', 'project_id', 'owner_id', 'status', 'deadline'], 'required'],
-            [['creation_date', 'deadline'], 'safe'],
+			['status','default','value'=>0],
+			['creation_date','default','value'=>function(){return date('Y-m-d');}],
+			['owner_id','default','value'=>function(){return Yii::$app->user->identity->id;}],
+            [['name','creation_date', 'project_id', 'owner_id', 'status', 'deadline'], 'required'],
+            ['creation_date', 'date', 'format'=>'yyyy-MM-dd'],
+			['deadline', 'datetime', 'format'=>'yyyy-MM-dd HH:mm:ss'],
             [['description'], 'string'],
             [['project_id', 'owner_id', 'status', 'is_deleted'], 'integer'],
             [['name'], 'string', 'max' => 255],
@@ -45,7 +50,6 @@ class Task extends \yii\db\ActiveRecord
             [['owner_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['owner_id' => 'id']],
         ];
     }
-
     /**
      * @inheritdoc
      */

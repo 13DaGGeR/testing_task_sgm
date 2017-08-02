@@ -30,8 +30,9 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface {
 	 */
 	public function rules() {
 		return [
+			['avatar','default','value'=>'/face.jpg'],
+			['birth_date', 'date', 'format'=>'yyyy-MM-dd'],
 			[['name', 'birth_date', 'avatar'], 'required'],
-			[['birth_date'], 'safe'],
 			[['name', 'avatar', 'token'], 'string', 'max' => 255],
 		];
 	}

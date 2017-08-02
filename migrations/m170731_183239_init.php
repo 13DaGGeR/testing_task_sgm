@@ -50,8 +50,8 @@ class m170731_183239_init extends Migration
 		$this->createTable('assignment',[
 			'id'=>$this->primaryKey(),
 			'task_id'=>$this->integer()->notNull(),
-			'old_user_id'=>$this->integer()->notNull()->defaultValue(0),
-			'new_user_id'=>$this->integer()->notNull()->defaultValue(0),
+			'old_owner_id'=>$this->integer()->notNull()->defaultValue(0),
+			'new_owner_id'=>$this->integer()->notNull()->defaultValue(0),
 			'owner_id'=>$this->integer()->notNull()->defaultValue(0),
 			'reason'=>$this->text()->notNull(),
 			'time'=>$this->dateTime()->notNull(),

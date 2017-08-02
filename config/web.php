@@ -19,7 +19,9 @@ $config = [
 		],
 		'user' => [
 			'identityClass' => 'app\models\User',
-			'enableAutoLogin' => true,
+			'enableAutoLogin' => false,
+			'enableSession' => false,
+			'loginUrl'=>null,
 		],
 		'errorHandler' => [
 			'errorAction' => 'site/error',
@@ -47,7 +49,24 @@ $config = [
 			'showScriptName' => false,
 			'enableStrictParsing' => true,
 			'rules' => [
-				['class'=>'yii\rest\UrlRule','controller'=>['user','project','task']],
+				[
+					'class'=>'yii\rest\UrlRule',
+					'controller'=>['user'],
+					'extraPatterns'=>['GET logout'=>'logout'],
+				],
+				[
+					'class'=>'yii\rest\UrlRule',
+					'controller'=>['project'],
+					'extraPatterns'=>['GET by-user/<id>'=>'get-by-user'],
+				],
+				[
+					'class'=>'yii\rest\UrlRule',
+					'controller'=>['task'],
+					'extraPatterns'=>[
+						'GET my-tasks'=>'my-tasks',
+						'PATCH assign/<id>'=>'assign',
+					],
+				],
 			],
 		], #*/
 	],

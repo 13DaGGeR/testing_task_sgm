@@ -7,6 +7,10 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 		<script>
 			var API_URL='/';
+			var users=[
+				['user1','token1'],
+				['user2','token2'],
+			];
 			var methods={
 				users:{
 					edit:{
@@ -19,15 +23,18 @@
 					},
 				},
 				projects:{
-					byUser:{
+					all:{
 						method:'get',
+					},
+					"by user":{
+						method:'get',
+						suffix:'/by-user',
 						by_id:true,
 					},
 					create:{
 						method:'post',
 						params:[
 							'name',
-							'creation_date',
 							'description',
 							'deadline',
 						],
@@ -55,7 +62,6 @@
 						method:'post',
 						params:[
 							'name',
-							'creation_date',
 							'description',
 							'project_id',
 							'owner_id',
@@ -80,23 +86,39 @@
 					assign:{
 						method:'patch',
 						by_id:true,
+						suffix:'/assign',
 						params:[
-							'owner_id',
+							'new_owner_id',
+							'reason'
 						],
 					},
-					assigned:{
+					"assigned to":{
 						method:'get',
 						search_params:[
 							'owner_id'
 						]
+					},
+					"my tasks":{
+						method:'get',
+						suffix:'/my-tasks',
 					}
 				}
 			};
 			$(function(){
-				fillOptions();
+				fillUsers();
+				fillMethods();
 				$('#form').submit(request);
 			});
-			function fillOptions(){//fill methods select
+			function fillUsers(){//fill users select
+				var uSelect=$('#users');
+				for(var i in users){
+					$(uSelect).append($('<option>',{
+						text:users[i][0],
+						value:users[i][1]
+					}));
+				}
+			}
+			function fillMethods(){//fill methods select
 				var methSelect=$('#methods');
 				for(var ctrl in methods){
 					var cm=methods[ctrl];
@@ -169,6 +191,10 @@
 				var method=methods[ctrl][meth].method.toUpperCase();
 				var requestUrl=API_URL+ctrl;
 
+				if(typeof methods[ctrl][meth].suffix!=='undefined'){
+					requestUrl+=methods[ctrl][meth].suffix;
+				}
+
 				var id=$('#id').val();
 				if(id){
 					requestUrl+='/'+id;
@@ -191,32 +217,34 @@
 					}
 				}
 
-				console.log('request '+method, requestUrl);
-				console.log(data);
+				var token=$('#users option:selected').val();
 
 				$.ajax({
 					url: requestUrl,
 					type: method,
 					data: data,
+					headers: {
+						Authorization:'Basic '+btoa(token+':')
+					},
 				}).done(function(data) {
-					console.log('result:',data);
-					$('#result_code').html(data.status);
-					$('#result').html(JSON.stringify(data));
+					$('#result_code').html('OK');
+					$('#result').html(JSON.stringify(data,null,"\t"));
 				}).fail(function(data) {
-					console.log('fail:',data);
-					$('#result_code').html(data.status);
-					$('#result').html(JSON.stringify(data));
+					$('#result_code').html('code:'+data.status);
+					$('#result').html(JSON.stringify(data,null,"\t"));
 				});
 			}
 		</script>
 		<style>
-			#methods,#form,#result_code,#result{
+			select,#form,#result_code,#result{
+				float:left;
+				clear:left;
 				min-width:300px;
 				margin-bottom:10px;
 				width:80%;
 			}
 			#result{
-				height:100px;
+				height:500px;
 				font-family:monospace;
 				white-space:pre;
 			}
@@ -227,7 +255,8 @@
 	</head>
 	<body>
 		<div>
-			<select id="methods"><option>Choose a method</option></select>
+			<select id="users"><option>Choose a user</option></select><br />
+			<select id="methods"><option>Choose a method</option></select><br />
 			<form id="form"></form>
 			<span id="result_code"></span>
 			<textarea id="result"></textarea>

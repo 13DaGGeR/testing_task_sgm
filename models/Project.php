@@ -21,6 +21,7 @@ use Yii;
  */
 class Project extends \yii\db\ActiveRecord
 {
+	use SoftDelete;
     /**
      * @inheritdoc
      */
@@ -35,8 +36,12 @@ class Project extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+			['status','default','value'=>0],
+			['creation_date','default','value'=>function(){return date('Y-m-d');}],
+			['owner_id','default','value'=>function(){return Yii::$app->user->identity->id;}],
+            ['creation_date', 'date', 'format'=>'yyyy-MM-dd'],
+			['deadline', 'datetime', 'format'=>'yyyy-MM-dd HH:mm:ss'],
             [['name', 'creation_date', 'description', 'owner_id', 'status', 'deadline'], 'required'],
-            [['creation_date', 'deadline'], 'safe'],
             [['description'], 'string'],
             [['owner_id', 'status', 'is_deleted'], 'integer'],
             [['name'], 'string', 'max' => 255],
@@ -76,4 +81,25 @@ class Project extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Task::className(), ['project_id' => 'id']);
     }
+	
+	public static function getByUser($uid){
+		$created=static::find()->with('tasks')->where(['owner_id'=>$uid])->asArray()->all();
+		
+		$assigned=[];
+		$tasks=Task::findAll(['owner_id'=>$uid]);
+		$pids=$p2t=[];
+		foreach($tasks as $t){
+			$pids[$t->project_id]=1;
+			$p2t[$t->project_id][]=$t;
+		}
+		foreach(static::find()->where(['id'=>array_keys($pids)])->asArray()->all() as $proj){
+			$proj=(object)$proj;
+			$proj->tasks=$p2t[$proj->id];
+			$assigned[]=$proj;
+		}
+		return [
+			'created'=>$created,
+			'assigned'=>$assigned,
+		];
+	}
 }
